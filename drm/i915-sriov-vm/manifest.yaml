@@ -1,0 +1,10 @@
+version: v1alpha1
+metadata:
+  name: i915-sriov-vm
+  version: "$VERSION"
+  author: ojsef39
+  description: |
+    Intel i915 SR-IOV driver extension for Talos Linux virtual machines (guest-only)
+  compatibility:
+    talos:
+      version: ">= v1.0.0"

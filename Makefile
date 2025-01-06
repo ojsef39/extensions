@@ -74,6 +74,7 @@ TARGETS += gvisor
 TARGETS += gvisor-debug
 TARGETS += hello-world-service
 TARGETS += i915
+TARGETS += i915-sriov-vm
 TARGETS += intel-ice-firmware
 TARGETS += intel-ucode
 TARGETS += iscsi-tools
