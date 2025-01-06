@@ -5,3 +5,4 @@
 _out
 internal/extensions/image-digests
 internal/extensions/descriptions.yaml
+.DS_Store
