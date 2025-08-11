@@ -13,7 +13,7 @@ IMAGE_TAG ?= $(TAG)
 OPERATING_SYSTEM := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 REGISTRY ?= ghcr.io
-USERNAME ?= siderolabs
+USERNAME ?= ojsef39
 REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -51,7 +51,7 @@ COMMON_ARGS += --build-arg=PKGS_PREFIX="$(PKGS_PREFIX)"
 
 EXTENSIONS_IMAGE_REF ?= $(REGISTRY_AND_USERNAME)/extensions:$(TAG)
 PKGS ?= v1.10.0-alpha.0-18-ge7eddcf
-PKGS_PREFIX ?= ghcr.io/siderolabs
+PKGS_PREFIX ?= ghcr.io/ojsef39
 
 # targets defines all the available targets
 

@@ -4,39 +4,63 @@ shell: /bin/sh
 steps:
   - prepare:
       - |
-        apk add --no-cache wget dpkg zstd make gcc linux-headers build-base
+        apk add --no-cache wget dpkg zstd tar make gcc linux-headers build-base \
+            linux-lts-dev linux-virt linux-virt-dev autoconf automake libtool
     install:
       - |
         set -x
+        # Get the source
         wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2024.12.30/i915-sriov-dkms_2024.12.30_amd64.deb
         dpkg -x i915-sriov-dkms_2024.12.30_amd64.deb /tmp/extract
 
-        mkdir -p /rootfs/usr/src/i915-sriov-dkms-2024.12.30
-        mkdir -p /rootfs/lib/modules/"$(uname -r)"/extra
+        # Create all required directories
+        mkdir -p /rootfs/usr/lib/modules-load.d
         mkdir -p /rootfs/etc/modprobe.d
+        mkdir -p /rootfs/usr/lib/modules
+        mkdir -p /rootfs/usr/src
+        mkdir -p /rootfs/usr/local/bin
+        mkdir -p /rootfs/etc/systemd/system
+        mkdir -p /rootfs/etc/systemd/system/multi-user.target.wants
 
-        # Copy all files
-        cp -r /tmp/extract/usr/src/i915-sriov-dkms-2024.12.30/* /rootfs/usr/src/i915-sriov-dkms-2024.12.30/
+        # Copy the source code
+        cp -r /tmp/extract/usr/src/i915-sriov-dkms-2024.12.30 /rootfs/usr/src/
 
-        # Create relative symlink
-        cd /rootfs/lib/modules/"$(uname -r)"/extra
-        ln -sf ../../../../usr/src/i915-sriov-dkms-2024.12.30 i915
-
-        # Module configuration
+        # Create module configuration
+        echo "i915" > /rootfs/usr/lib/modules-load.d/i915.conf
         echo "options i915 enable_guc=3" > /rootfs/etc/modprobe.d/i915-sriov-vm.conf
 
-        # Create dkms.conf if not present
-        cat > /rootfs/usr/src/i915-sriov-dkms-2024.12.30/dkms.conf << 'EOF'
-        PACKAGE_NAME="i915-sriov-dkms"
-        PACKAGE_VERSION="2024.12.30"
-        BUILT_MODULE_NAME[0]="i915"
-        BUILT_MODULE_LOCATION[0]="drivers/gpu/drm/i915"
-        DEST_MODULE_LOCATION[0]="/extra"
-        AUTOINSTALL="yes"
-        REMAKE_INITRD="no"
-        MAKE[0]="make KVER=${kernelver} KSRC=${kernel_source_dir} modules"
-        CLEAN="make clean"
+        # Create a helper script to build the module at first boot
+        cat > /rootfs/usr/local/bin/build-i915-module.sh << 'EOF'
+        #!/bin/sh
+        set -e
+        cd /usr/src/i915-sriov-dkms-2024.12.30
+        make -C /lib/modules/$(uname -r)/build M=$(pwd) modules
+        install -D ./drivers/gpu/drm/i915/i915.ko /lib/modules/$(uname -r)/extra/i915.ko
+        depmod -a
         EOF
+
+        chmod +x /rootfs/usr/local/bin/build-i915-module.sh
+
+        # Create systemd service to build module at first boot
+        cat > /rootfs/etc/systemd/system/i915-module-build.service << EOF
+        [Unit]
+        Description=Build i915 SR-IOV module
+        Before=multi-user.target
+        ConditionPathExists=!/lib/modules/\$(uname -r)/extra/i915.ko
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/build-i915-module.sh
+        RemainAfterExit=yes
+
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+
+        # Enable the service
+        ln -s /etc/systemd/system/i915-module-build.service \
+              /rootfs/etc/systemd/system/multi-user.target.wants/i915-module-build.service
+
 finalize:
   - from: /rootfs
     to: /rootfs
