@@ -1,0 +1,14 @@
+# Talos machine configuration patch for i915 SR-IOV driver
+# Apply this patch to your machine configuration to enable i915 SR-IOV support
+
+machine:
+  kernel:
+    # Required kernel parameters for i915 SR-IOV
+    args:
+      - i915.enable_guc=3      # Enable GuC (Graphics Micro Controller) submission
+      - module_blacklist=xe    # Blacklist the xe driver to avoid conflicts
+    
+    # Load the required kernel modules
+    modules:
+      - name: i915             # Intel i915 graphics driver with SR-IOV patches
+      - name: kvmgt            # Kernel-based Virtual Machine Graphics Translation module

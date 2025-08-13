@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2025-07-30T10:56:52Z by kres 5fb5b90.
+# Generated on 2025-08-13T18:20:53Z by kres 9f63e23.
 
 # common variables
 
@@ -13,7 +13,7 @@ IMAGE_TAG ?= $(TAG)
 OPERATING_SYSTEM := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 REGISTRY ?= ghcr.io
-USERNAME ?= siderolabs
+USERNAME ?= ojsef39
 REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -95,6 +95,7 @@ TARGETS += nvidia-fabricmanager-lts
 TARGETS += nvidia-fabricmanager-production
 TARGETS += nvidia-open-gpu-kernel-modules-lts
 TARGETS += nvidia-open-gpu-kernel-modules-production
+TARGETS += i915-sriov-driver
 TARGETS += nvme-cli
 TARGETS += panfrost
 TARGETS += qemu-guest-agent
@@ -119,56 +120,6 @@ TARGETS += zerotier
 TARGETS += zfs
 NONFREE_TARGETS = nonfree-kmod-nvidia-lts
 NONFREE_TARGETS += nonfree-kmod-nvidia-production
-
-# help menu
-
-export define HELP_MENU_HEADER
-# Getting Started
-
-To build this project, you must have the following installed:
-
-- git
-- make
-- docker (19.03 or higher)
-
-## Creating a Builder Instance
-
-The build process makes use of experimental Docker features (buildx).
-To enable experimental features, add 'experimental: "true"' to '/etc/docker/daemon.json' on
-Linux or enable experimental features in Docker GUI for Windows or Mac.
-
-To create a builder instance, run:
-
-	docker buildx create --name local --use
-
-If running builds that needs to be cached aggresively create a builder instance with the following:
-
-	docker buildx create --name local --use --config=config.toml
-
-config.toml contents:
-
-[worker.oci]
-  gc = true
-  gckeepstorage = 50000
-
-  [[worker.oci.gcpolicy]]
-    keepBytes = 10737418240
-    keepDuration = 604800
-    filters = [ "type==source.local", "type==exec.cachemount", "type==source.git.checkout"]
-  [[worker.oci.gcpolicy]]
-    all = true
-    keepBytes = 53687091200
-
-If you already have a compatible builder instance, you may use that instead.
-
-## Artifacts
-
-All artifacts will be output to ./$(ARTIFACTS). Images will be tagged with the
-registry "$(REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(IMAGE):$(IMAGE_TAG)).
-The registry and username can be overridden by exporting REGISTRY, and USERNAME
-respectively.
-
-endef
 
 all: $(TARGETS)  ## Builds all targets defined.
 
@@ -203,7 +154,7 @@ nonfree: $(NONFREE_TARGETS)  ## Builds all nonfree targets defined.
 
 .PHONY: $(TARGETS) $(NONFREE_TARGETS)
 $(TARGETS) $(NONFREE_TARGETS): $(ARTIFACTS)/bldr
-	@$(MAKE) docker-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/$@:$(shell $(ARTIFACTS)/bldr eval --target $@ --build-arg TAG=$(TAG) '{{.VERSION}}' 2>/dev/null) --push=$(PUSH)"
+	@$(MAKE) docker-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/$@:$(TAG) --push=$(PUSH) $(TARGET_ARGS)"
 
 $(ARTIFACTS)/bldr: $(ARTIFACTS)  ## Downloads bldr binary.
 	@curl -sSL https://github.com/siderolabs/bldr/releases/download/$(BLDR_RELEASE)/bldr-$(OPERATING_SYSTEM)-$(GOARCH) -o $(ARTIFACTS)/bldr

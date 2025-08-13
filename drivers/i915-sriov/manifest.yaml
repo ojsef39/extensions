@@ -1,0 +1,13 @@
+version: v1alpha1
+metadata:
+  name: i915-sriov-driver
+  version: "$VERSION"
+  author: Sidero Labs
+  description: |
+    This system extension provides Intel i915 SR-IOV DKMS driver kernel modules built against a specific Talos version.
+    This driver enables SR-IOV (Single Root I/O Virtualization) functionality for Intel integrated GPUs,
+    allowing GPU sharing across virtual machines. The extension includes both "i915" and "kvmgt" kernel modules
+    required for SR-IOV support.
+  compatibility:
+    talos:
+      version: ">= v1.10.0"
